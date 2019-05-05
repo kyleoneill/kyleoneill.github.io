@@ -1,0 +1,157 @@
+@font-face {
+    font-family: 'FrizQuadrata';
+    src: url('font/FrizQuadrata.eot?#iefix') format('embedded-opentype'),  url('font/FrizQuadrata.woff') format('woff'), url('font/FrizQuadrata.ttf')  format('truetype'), url('font/FrizQuadrata.svg#FrizQuadrata') format('svg');
+    font-weight: normal;
+    font-style: normal;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    text-align: center;
+    background-color: rgb(29, 42, 48);
+    font-family: 'FrizQuadrata';
+}
+#background {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background: url('img/map.jpg');
+    background-size: cover;
+    background-position: center;
+    z-index: -1;
+    filter: blur(20px);
+}
+#map_container {
+    display: inline-block;
+    position: relative;
+}
+#map {
+    height: 100vh;
+    filter: brightness(60%);
+}
+#overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    z-index: 2;
+}
+
+.button {
+    position: absolute;
+    overflow: visible;
+    transform: translate(-50%, -50%);
+}
+.button.inactive .timer {
+    display: block;
+}
+.button.inactive img {
+    filter: brightness(25%) drop-shadow(0 0 10px rgba(0, 0, 0, 1.0));
+}
+.icon {
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.6));
+}
+.icon:hover {
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 1));
+}
+.timer {
+    display: none;
+    color: #d4ae2b;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    font-size: 35px;
+    pointer-events: none;
+    text-shadow: 0 0 2px rgba(0, 0, 0, 1);
+}
+
+/* Red map */
+#red_baron {
+    left: 17%;
+    top: 34%;
+}
+#red_baron img {
+    height: 12vh;
+}
+#red_dragon {
+    left: 61%;
+    top: 87%;
+}
+#red_dragon img {
+    height: 10vh;
+}
+#red_scuttler {
+    left: 21%;
+    top: 48%;
+}
+#red_scuttler img {
+    height: 8vh;
+}
+#red_krug {
+    left: 29%;
+    top: 21%;
+}
+#red_krug img {
+    height: 6vh;
+}
+#red_brambleback {
+    left: 35%;
+    top: 32%;
+}
+#red_brambleback img {
+    height: 7vh;
+}
+#red_raptors {
+    left: 41%;
+    top: 44%;
+}
+#red_raptors img {
+    height: 6vh;
+}
+#red_wolves {
+    left: 68%;
+    top: 54%;
+}
+#red_wolves img {
+    height: 6vh;
+}
+#red_sentinel {
+    left: 69%;
+    top: 65%;
+}
+#red_sentinel img {
+    height: 7vh;
+}
+#red_gromp {
+    left: 83%;
+    top: 72%;
+}
+#red_gromp img {
+    height: 8vh;
+}
+#red_inhibitor_top {
+    left: 69%;
+    top: 10%;
+}
+#red_inhibitor_top img {
+    height: 10vh;
+}
+#red_inhibitor_mid {
+    left: 73%;
+    top: 26%;
+}
+#red_inhibitor_mid img {
+    height: 10vh;
+}
+#red_inhibitor_bot {
+    left: 90%;
+    top: 29%;
+}
+#red_inhibitor_bot img {
+    height: 10vh;
+}
