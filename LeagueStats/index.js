@@ -94,7 +94,8 @@ const InhibitorRespawnTime = 300
 
 // Logic
 
-const socket = new WebSocket('ws://ec2-54-221-104-42.compute-1.amazonaws.com:8080')
+// const socket = new WebSocket('wss://ec2-54-221-104-42.compute-1.amazonaws.com:8080')
+const socket = new WebSocket('wss://ws.kyleoneill.net:8080')
 
 let buttons = null
 let gameState = null
@@ -103,7 +104,10 @@ socket.addEventListener('message', function (event) {
   let message = JSON.parse(event.data)
   if (message.event === 'initialize' || message.event === 'update') {
     gameState = message.data
-    update()
+    if (buttons != null)
+    {
+      update()
+    }
   }
 })
 
@@ -222,5 +226,9 @@ window.onload = () => {
   })
 
   buttons = initialize('red')
+  if (gameState != null)
+  {
+    update()
+  }
   setInterval(update, 500);
 }
