@@ -340,7 +340,7 @@ li{
 }
 
 #contact li > i{
-  width: 9pt; /* for text alignment */
+  width: 5pt; /* for text alignment */
   text-align: right;
 }
 
