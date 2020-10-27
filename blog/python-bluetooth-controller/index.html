@@ -58,7 +58,7 @@
 <h1 id="reading-a-computer-screen">Reading a Computer Screen</h1>
 <p>PIL stands for Python Imaging Library and was a library which allowed Python to manipulate image files. PIL was discontinued but has been succeeded by a fork to the project called <a href="https://pillow.readthedocs.io/en/stable/">Pillow</a>. Beyond the capability to edit images, Pillow allows us to stream images directly off of a computer monitor.</p>
 <h2 id="tesseract-ocr">Tesseract OCR</h2>
-<p>One of the largest draws of Python is how its syntax and ecosystem allow for complicated expressions and tasks to be utilized in few lines of code. Python is routinely used in machine learning applications, like OCR. <a href="https://github.com/tesseract-ocr/tesseract">Tesseract OCR</a> is an open source OCR engine maintained by Google. <a href="https://pypi.org/project/pytesseract/">PyTesseract</a> is a wrapper for Tesseract allowing Python to use the OCR engine.</p>
+<p>One of the largest draws of Python is how its syntax and ecosystem allow for complicated expressions and tasks to be utilized in few lines of code. Python is routinely used in machine learning applications, like OCR (<a href="https://en.wikipedia.org/wiki/Optical_character_recognition">Optical Character Recognition</a>). <a href="https://github.com/tesseract-ocr/tesseract">Tesseract OCR</a> is an open source OCR engine maintained by Google. <a href="https://pypi.org/project/pytesseract/">PyTesseract</a> is a wrapper for Tesseract allowing Python to use the OCR engine.</p>
 <h2 id="putting-it-all-together">Putting It All Together</h2>
 <p>Making a simple screen reader with OCR capability is surprisingly easy.</p>
 <pre style="background-color:#2b303b;">
@@ -72,13 +72,13 @@ img = ImageGrab.</span><span style="color:#bf616a;">grab</span><span style="colo
 probable_string = pytesseract.</span><span style="color:#bf616a;">image_to_string</span><span style="color:#c0c5ce;">(img)</span><span style="color:#c0c5ce;">
 </span><span style="color:#96b5b4;">print</span><span style="color:#c0c5ce;">(</span><span style="color:#b48ead;">f</span><span style="color:#c0c5ce;">&quot;</span><span style="color:#a3be8c;">Tesseract thinks our image says: </span><span style="color:#c0c5ce;">{probable_string}&quot;)</span><span style="color:#c0c5ce;">
 </span></code></pre>
-<p>The above snippit will create a square image out of your computer monitor starting from the top left corner with a length and width of 100 pixels. It passes this image to Tesseract, which will try to turn that image into a string.</p>
-<p>Surprised about how easy it was to come this far, I assumed that I was essentially finished with the &quot;read values from the screen&quot; portion of the program. I got into a League of Legends match and pointed the program to the area of the screen where my health was and took damage, expecting the <code>probable_string</code> variable in the above snippit to return my health value. The string did not show health values, it did not even return numbers. The output look like garbled and randomized text.</p>
+<p>The above snippet will create a square image out of your computer monitor starting from the top left corner with a length and width of 100 pixels. It passes this image to Tesseract, which will try to turn that image into a string.</p>
+<p>Surprised about how easy it was to come this far, I assumed that I was essentially finished with the &quot;read values from the screen&quot; portion of the program. I got into a League of Legends match and pointed the program to the area of the screen where my health was and took damage, expecting the <code>probable_string</code> variable in the above snippet to return my health value. The string did not show health values, it did not even return numbers. The output look like garbled and randomized text.</p>
 <h2 id="training-tesseract">Training Tesseract</h2>
 <p>Tesseract uses machine learning to convert an image into a string. Out of the box, Tesseract is usually accurate and minor inaccuracies can be fixed by fiddling with its config settings. I assumed that Tesseract was failing to understand health values from League of Legends because the game uses a custom font that was never in any of Tesseract's training models. Luckily, it's possible to train your own model.</p>
 <p>I got into another match and took screenshots at various health values ensuring that I had at least one example of all ten integers (0 through 9). For reference, this is what a health bar in League of Legends looks like. The green bar at the top is health, the blue bar below it is mana. I was not planning on using the mana value, but it is helpful here to create a larger training set of numbers.</p>
 <p><img src="https://kyleoneill.dev/blog/python-bluetooth-controller/ex_health.png" alt="health" /></p>
-<p>I added an image processing step to the code snippit above to make the values easier for Tesseract to read. I used this processing on the health bar screenshots to do the same for the training data. The below code snippit details this processing.</p>
+<p>I added an image processing step to the code snippet above to make the values easier for Tesseract to read. I used this processing on the health bar screenshots to do the same for the training data. The below code snippet details this processing.</p>
 <pre style="background-color:#2b303b;">
 <code><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">process_image</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">img</span><span style="color:#c0c5ce;">):</span><span style="color:#c0c5ce;">
     R, G, B = img.</span><span style="color:#bf616a;">convert</span><span style="color:#c0c5ce;">(&quot;</span><span style="color:#a3be8c;">RGB</span><span style="color:#c0c5ce;">&quot;).</span><span style="color:#bf616a;">split</span><span style="color:#c0c5ce;">()</span><span style="color:#c0c5ce;">
@@ -100,7 +100,10 @@ probable_string = pytesseract.</span><span style="color:#bf616a;">image_to_strin
 </span></code></pre>
 <p>This function splits an image into its red, green, and blue channels. It then iterates through each pixel to correct the image. If a pixel is too dark or too colorful, it's assumed to be background and set to white. The white text is set to black. This gives the image a higher contrast and numbers are more clear. After processing the health looked more like the following:</p>
 <p><img src="https://kyleoneill.dev/blog/python-bluetooth-controller/processed_health.png" alt="processed_health" /></p>
-<p>Next, box files must be generated for each health image. A box file is a series of symbols and coordinates describing the text content of an image and is used during training so Tesseract knows when a model is correct. Tesseract can generate box files but the file will almost certainly need to be manually corrected. The generation can be done on a terminal like this: <code>tesseract my_training_set.my_photo.exp0.png my_training_set.font.exp0 batch.nochop makebox</code>.</p>
+<p>Next, box files must be generated for each health image. A box file is a series of symbols and coordinates describing the text content of an image and is used during training so Tesseract knows when a model is correct. Tesseract can generate box files but the file will almost certainly need to be manually corrected. The generation can be done on a terminal like this: </p>
+<pre style="background-color:#2b303b;">
+<code><span style="color:#bf616a;">$</span><span style="color:#c0c5ce;"> tesseract my_training_set.my_photo.exp0.png my_training_set.font.exp0 batch.nochop makebox</span><span style="color:#c0c5ce;">
+</span></code></pre>
 <p>The first four lines of a corrected box file for the processed health image just above will look like this:</p>
 <pre style="background-color:#2b303b;">
 <code><span style="color:#c0c5ce;">6 3 21 12 34 0</span><span style="color:#c0c5ce;">
@@ -115,7 +118,9 @@ probable_string = pytesseract.</span><span style="color:#bf616a;">image_to_strin
 <p>Trying the process again with the new model improves accuracy a great deal - Tesseract now recognizes that all of the characters it sees in the health bar are numbers and it's output is extremely consistent. Unfortunately, this still has not solved the problem. My model always mistook &quot;2&quot; for &quot;8&quot; and &quot;1&quot; for &quot;7&quot;. This could be because the training set was not large enough. I added more images to the training set focusing on those two integers bringing the total to seven images, but the problem persisted.</p>
 <h2 id="the-simple-route-prevails">The Simple Route Prevails</h2>
 <p>In the end I was able to get Tesseract to be correct &gt;99% of the time by processing the image slightly more and by using the engine's configuration settings. Even though the training route did not work, it was a lot of fun to learn how to train my own model. In the <code>image_to_string</code> method I set my config to:</p>
-<p><code>config=&quot;--psm 6 --oem 3 -c tessedit_char_whitelist=0123456789/&quot;</code>.</p>
+<pre style="background-color:#2b303b;">
+<code><span style="color:#c0c5ce;">config=&quot;--psm 6 --oem 3 -c tessedit_char_whitelist=0123456789/&quot;</span><span style="color:#c0c5ce;">
+</span></code></pre>
 <ul>
 <li>psm stands for &quot;page segmentation mode&quot; and --psm 6 tells Tesseract to assume that the image is going to be a single uniform block of text.</li>
 <li>oem stands for &quot;OCR Engine mode&quot; and --oem 3 tells Tesseract to use the default setting</li>
