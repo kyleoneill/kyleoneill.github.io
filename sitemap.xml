@@ -10,6 +10,10 @@
         <loc>https://kyleoneill.dev/blog/</loc>
     </url>
     <url>
+        <loc>https://kyleoneill.dev/blog/learning-x86-64/</loc>
+        <lastmod>2023-11-08</lastmod>
+    </url>
+    <url>
         <loc>https://kyleoneill.dev/blog/python-bluetooth-controller/</loc>
         <lastmod>2020-10-26</lastmod>
     </url>

@@ -61,16 +61,15 @@
 <p>One of the largest draws of Python is how its syntax and ecosystem allow for complicated expressions and tasks to be utilized in few lines of code. Python is routinely used in machine learning applications, like OCR (<a href="https://en.wikipedia.org/wiki/Optical_character_recognition">Optical Character Recognition</a>). <a href="https://github.com/tesseract-ocr/tesseract">Tesseract OCR</a> is an open source OCR engine maintained by Google. <a href="https://pypi.org/project/pytesseract/">PyTesseract</a> is a wrapper for Tesseract allowing Python to use the OCR engine.</p>
 <h2 id="putting-it-all-together">Putting It All Together</h2>
 <p>Making a simple screen reader with OCR capability is surprisingly easy.</p>
-<pre style="background-color:#2b303b;">
-<code><span style="color:#b48ead;">from </span><span style="color:#c0c5ce;">PIL </span><span style="color:#b48ead;">import </span><span style="color:#c0c5ce;">ImageGrab</span><span style="color:#c0c5ce;">
-</span><span style="color:#b48ead;">import </span><span style="color:#c0c5ce;">pytesseract</span><span style="color:#c0c5ce;">
-x = </span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">
-y = </span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">
-offx = </span><span style="color:#d08770;">100</span><span style="color:#c0c5ce;">
-offy = </span><span style="color:#d08770;">100</span><span style="color:#c0c5ce;">
-img = ImageGrab.</span><span style="color:#bf616a;">grab</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">bbox</span><span style="color:#c0c5ce;">=(x, y, x + offx, y + offy))</span><span style="color:#c0c5ce;">
-probable_string = pytesseract.</span><span style="color:#bf616a;">image_to_string</span><span style="color:#c0c5ce;">(img)</span><span style="color:#c0c5ce;">
-</span><span style="color:#96b5b4;">print</span><span style="color:#c0c5ce;">(</span><span style="color:#b48ead;">f</span><span style="color:#c0c5ce;">&quot;</span><span style="color:#a3be8c;">Tesseract thinks our image says: </span><span style="color:#c0c5ce;">{probable_string}&quot;)</span><span style="color:#c0c5ce;">
+<pre data-lang="python" style="background-color:#31333d;color:#ffffffc4;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#db7c6d;">from </span><span>PIL </span><span style="color:#db7c6d;">import </span><span>ImageGrab
+</span><span style="color:#db7c6d;">import </span><span>pytesseract
+</span><span>x </span><span style="color:#db7c6d;">= 0
+</span><span>y </span><span style="color:#db7c6d;">= 0
+</span><span>offx </span><span style="color:#db7c6d;">= 100
+</span><span>offy </span><span style="color:#db7c6d;">= 100
+</span><span>img </span><span style="color:#db7c6d;">= </span><span>ImageGrab.</span><span style="font-weight:bold;color:#a3cbe3;">grab</span><span>(</span><span style="color:#ffffff;">bbox</span><span style="color:#db7c6d;">=</span><span>(x, y, x </span><span style="color:#db7c6d;">+ </span><span>offx, y </span><span style="color:#db7c6d;">+ </span><span>offy))
+</span><span>probable_string </span><span style="color:#db7c6d;">= </span><span>pytesseract.</span><span style="font-weight:bold;color:#a3cbe3;">image_to_string</span><span>(img)
+</span><span style="color:#db7c6d;">print</span><span>(</span><span style="color:#a3cbe3;">f</span><span style="font-weight:bold;color:#dbbb3d;">&quot;</span><span>Tesseract thinks our image says: {probable_string}</span><span style="font-weight:bold;color:#dbbb3d;">&quot;</span><span>)
 </span></code></pre>
 <p>The above snippet will create a square image out of your computer monitor starting from the top left corner with a length and width of 100 pixels. It passes this image to Tesseract, which will try to turn that image into a string.</p>
 <p>Surprised about how easy it was to come this far, I assumed that I was essentially finished with the &quot;read values from the screen&quot; portion of the program. I got into a League of Legends match and pointed the program to the area of the screen where my health was and took damage, expecting the <code>probable_string</code> variable in the above snippet to return my health value. The string did not show health values, it did not even return numbers. The output look like garbled and randomized text.</p>
@@ -79,47 +78,42 @@ probable_string = pytesseract.</span><span style="color:#bf616a;">image_to_strin
 <p>I got into another match and took screenshots at various health values ensuring that I had at least one example of all ten integers (0 through 9). For reference, this is what a health bar in League of Legends looks like. The green bar at the top is health, the blue bar below it is mana. I was not planning on using the mana value, but it is helpful here to create a larger training set of numbers.</p>
 <p><img src="https://kyleoneill.dev/blog/python-bluetooth-controller/ex_health.png" alt="health" /></p>
 <p>I added an image processing step to the code snippet above to make the values easier for Tesseract to read. I used this processing on the health bar screenshots to do the same for the training data. The below code snippet details this processing.</p>
-<pre style="background-color:#2b303b;">
-<code><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">process_image</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">img</span><span style="color:#c0c5ce;">):</span><span style="color:#c0c5ce;">
-    R, G, B = img.</span><span style="color:#bf616a;">convert</span><span style="color:#c0c5ce;">(&quot;</span><span style="color:#a3be8c;">RGB</span><span style="color:#c0c5ce;">&quot;).</span><span style="color:#bf616a;">split</span><span style="color:#c0c5ce;">()</span><span style="color:#c0c5ce;">
-    r = R.</span><span style="color:#bf616a;">load</span><span style="color:#c0c5ce;">()</span><span style="color:#c0c5ce;">
-    g = G.</span><span style="color:#bf616a;">load</span><span style="color:#c0c5ce;">()</span><span style="color:#c0c5ce;">
-    b = B.</span><span style="color:#bf616a;">load</span><span style="color:#c0c5ce;">()</span><span style="color:#c0c5ce;">
-    w, h = img.size</span><span style="color:#c0c5ce;">
-    threshold = </span><span style="color:#d08770;">170</span><span style="color:#c0c5ce;">
-    threshold_two = </span><span style="color:#d08770;">10</span><span style="color:#c0c5ce;">
-    </span><span style="color:#b48ead;">for </span><span style="color:#c0c5ce;">i </span><span style="color:#b48ead;">in </span><span style="color:#96b5b4;">range</span><span style="color:#c0c5ce;">(w):</span><span style="color:#c0c5ce;">
-        </span><span style="color:#b48ead;">for </span><span style="color:#c0c5ce;">j </span><span style="color:#b48ead;">in </span><span style="color:#96b5b4;">range</span><span style="color:#c0c5ce;">(h):</span><span style="color:#c0c5ce;">
-            </span><span style="color:#b48ead;">if </span><span style="color:#c0c5ce;">r[i, j] &lt; threshold or g[i, j] &lt; threshold or b[i, j] &lt; threshold:</span><span style="color:#c0c5ce;">
-                r[i, j] = </span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">
-            </span><span style="color:#b48ead;">if </span><span style="color:#96b5b4;">abs</span><span style="color:#c0c5ce;">(r[i, j] - g[i, j]) &gt; threshold_two or </span><span style="color:#96b5b4;">abs</span><span style="color:#c0c5ce;">(g[i, j] - b[i, j]) &gt; threshold_two or </span><span style="color:#96b5b4;">abs</span><span style="color:#c0c5ce;">(r[i, j] - b[i, j]) &gt; threshold_two:</span><span style="color:#c0c5ce;">
-                r[i, j] = </span><span style="color:#d08770;">0</span><span style="color:#c0c5ce;">
-            r[i, j] = </span><span style="color:#d08770;">255 </span><span style="color:#c0c5ce;">- r[i, j]</span><span style="color:#c0c5ce;">
-    img = Image.</span><span style="color:#bf616a;">merge</span><span style="color:#c0c5ce;">(&quot;</span><span style="color:#a3be8c;">RGB</span><span style="color:#c0c5ce;">&quot;, (R, R, R))</span><span style="color:#c0c5ce;">
-    </span><span style="color:#b48ead;">return </span><span style="color:#c0c5ce;">img</span><span style="color:#c0c5ce;">
+<pre data-lang="python" style="background-color:#31333d;color:#ffffffc4;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#db7c6d;">def </span><span style="color:#a2ba43;">process_image</span><span>(</span><span style="color:#ffffff;">img</span><span>):
+</span><span>    R, G, B </span><span style="color:#db7c6d;">= </span><span>img.</span><span style="font-weight:bold;color:#a3cbe3;">convert</span><span>(</span><span style="font-weight:bold;color:#dbbb3d;">&quot;</span><span>RGB</span><span style="font-weight:bold;color:#dbbb3d;">&quot;</span><span>).</span><span style="font-weight:bold;color:#a3cbe3;">split</span><span>()
+</span><span>    r </span><span style="color:#db7c6d;">= </span><span>R.</span><span style="font-weight:bold;color:#a3cbe3;">load</span><span>()
+</span><span>    g </span><span style="color:#db7c6d;">= </span><span>G.</span><span style="font-weight:bold;color:#a3cbe3;">load</span><span>()
+</span><span>    b </span><span style="color:#db7c6d;">= </span><span>B.</span><span style="font-weight:bold;color:#a3cbe3;">load</span><span>()
+</span><span>    w, h </span><span style="color:#db7c6d;">= </span><span>img.size
+</span><span>    threshold </span><span style="color:#db7c6d;">= 170
+</span><span>    threshold_two </span><span style="color:#db7c6d;">= 10
+</span><span>    </span><span style="color:#db7c6d;">for </span><span>i </span><span style="color:#db7c6d;">in range</span><span>(w):
+</span><span>        </span><span style="color:#db7c6d;">for </span><span>j </span><span style="color:#db7c6d;">in range</span><span>(h):
+</span><span>            </span><span style="color:#db7c6d;">if </span><span>r[i, j] </span><span style="color:#db7c6d;">&lt; </span><span>threshold </span><span style="color:#db7c6d;">or </span><span>g[i, j] </span><span style="color:#db7c6d;">&lt; </span><span>threshold </span><span style="color:#db7c6d;">or </span><span>b[i, j] </span><span style="color:#db7c6d;">&lt; </span><span>threshold:
+</span><span>                r[i, j] </span><span style="color:#db7c6d;">= 0
+</span><span>            </span><span style="color:#db7c6d;">if abs</span><span>(r[i, j] </span><span style="color:#db7c6d;">- </span><span>g[i, j]) </span><span style="color:#db7c6d;">&gt; </span><span>threshold_two </span><span style="color:#db7c6d;">or abs</span><span>(g[i, j] </span><span style="color:#db7c6d;">- </span><span>b[i, j]) </span><span style="color:#db7c6d;">&gt; </span><span>threshold_two </span><span style="color:#db7c6d;">or abs</span><span>(r[i, j] </span><span style="color:#db7c6d;">- </span><span>b[i, j]) </span><span style="color:#db7c6d;">&gt; </span><span>threshold_two:
+</span><span>                r[i, j] </span><span style="color:#db7c6d;">= 0
+</span><span>            r[i, j] </span><span style="color:#db7c6d;">= 255 - </span><span>r[i, j]
+</span><span>    img </span><span style="color:#db7c6d;">= </span><span>Image.</span><span style="font-weight:bold;color:#a3cbe3;">merge</span><span>(</span><span style="font-weight:bold;color:#dbbb3d;">&quot;</span><span>RGB</span><span style="font-weight:bold;color:#dbbb3d;">&quot;</span><span>, (R, R, R))
+</span><span>    </span><span style="color:#db7c6d;">return </span><span>img
 </span></code></pre>
 <p>This function splits an image into its red, green, and blue channels. It then iterates through each pixel to correct the image. If a pixel is too dark or too colorful, it's assumed to be background and set to white. The white text is set to black. This gives the image a higher contrast and numbers are more clear. After processing the health looked more like the following:</p>
 <p><img src="https://kyleoneill.dev/blog/python-bluetooth-controller/processed_health.png" alt="processed_health" /></p>
 <p>Next, box files must be generated for each health image. A box file is a series of symbols and coordinates describing the text content of an image and is used during training so Tesseract knows when a model is correct. Tesseract can generate box files but the file will almost certainly need to be manually corrected. The generation can be done on a terminal like this: </p>
-<pre style="background-color:#2b303b;">
-<code><span style="color:#bf616a;">$</span><span style="color:#c0c5ce;"> tesseract my_training_set.my_photo.exp0.png my_training_set.font.exp0 batch.nochop makebox</span><span style="color:#c0c5ce;">
+<pre data-lang="sh" style="background-color:#31333d;color:#ffffffc4;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="font-weight:bold;color:#a3cbe3;">$</span><span> tesseract my_training_set.my_photo.exp0.png my_training_set.font.exp0 batch.nochop makebox
 </span></code></pre>
 <p>The first four lines of a corrected box file for the processed health image just above will look like this:</p>
-<pre style="background-color:#2b303b;">
-<code><span style="color:#c0c5ce;">6 3 21 12 34 0</span><span style="color:#c0c5ce;">
-0 13 21 22 34 0</span><span style="color:#c0c5ce;">
-3 23 21 31 34 0</span><span style="color:#c0c5ce;">
-/ 37 21 44 34 0</span><span style="color:#c0c5ce;">
+<pre style="background-color:#31333d;color:#ffffffc4;"><code><span>6 3 21 12 34 0
+</span><span>0 13 21 22 34 0
+</span><span>3 23 21 31 34 0
+</span><span>/ 37 21 44 34 0
 </span></code></pre>
-<p>After all of the box files are finished Tesseract can train a new model. The training process is described <a href="http://cjas.org/%7Ejamesy/tesseract-training.html">here</a>. Once the model is trained, using it is as simple as moving the generated <code>.traineddata</code> file into Tesseract's <code>tessdata</code> folder and then referring to it in Tesseract's config, like this:</p>
-<pre style="background-color:#2b303b;">
-<code><span style="color:#c0c5ce;">health = pytesseract.</span><span style="color:#bf616a;">image_to_string</span><span style="color:#c0c5ce;">(img, </span><span style="color:#bf616a;">lang</span><span style="color:#c0c5ce;">=&quot;</span><span style="color:#a3be8c;">symbols</span><span style="color:#c0c5ce;">&quot;)</span><span style="color:#c0c5ce;">
+<p>After all of the box files are finished Tesseract can train a new model. The training process is described <a href="http://cjas.org/~jamesy/tesseract-training.html">here</a>. Once the model is trained, using it is as simple as moving the generated <code>.traineddata</code> file into Tesseract's <code>tessdata</code> folder and then referring to it in Tesseract's config, like this:</p>
+<pre data-lang="python" style="background-color:#31333d;color:#ffffffc4;" class="language-python "><code class="language-python" data-lang="python"><span>health </span><span style="color:#db7c6d;">= </span><span>pytesseract.</span><span style="font-weight:bold;color:#a3cbe3;">image_to_string</span><span>(img, </span><span style="color:#ffffff;">lang</span><span style="color:#db7c6d;">=</span><span style="font-weight:bold;color:#dbbb3d;">&quot;</span><span>symbols</span><span style="font-weight:bold;color:#dbbb3d;">&quot;</span><span>)
 </span></code></pre>
 <p>Trying the process again with the new model improves accuracy a great deal - Tesseract now recognizes that all of the characters it sees in the health bar are numbers and it's output is extremely consistent. Unfortunately, this still has not solved the problem. My model always mistook &quot;2&quot; for &quot;8&quot; and &quot;1&quot; for &quot;7&quot;. This could be because the training set was not large enough. I added more images to the training set focusing on those two integers bringing the total to seven images, but the problem persisted.</p>
 <h2 id="the-simple-route-prevails">The Simple Route Prevails</h2>
 <p>In the end I was able to get Tesseract to be correct &gt;99% of the time by processing the image slightly more and by using the engine's configuration settings. Even though the training route did not work, it was a lot of fun to learn how to train my own model. In the <code>image_to_string</code> method I set my config to:</p>
-<pre style="background-color:#2b303b;">
-<code><span style="color:#c0c5ce;">config=&quot;--psm 6 --oem 3 -c tessedit_char_whitelist=0123456789/&quot;</span><span style="color:#c0c5ce;">
+<pre style="background-color:#31333d;color:#ffffffc4;"><code><span>config=&quot;--psm 6 --oem 3 -c tessedit_char_whitelist=0123456789/&quot;
 </span></code></pre>
 <ul>
 <li>psm stands for &quot;page segmentation mode&quot; and --psm 6 tells Tesseract to assume that the image is going to be a single uniform block of text.</li>
@@ -127,9 +121,8 @@ probable_string = pytesseract.</span><span style="color:#bf616a;">image_to_strin
 <li>-c allows us to set config variables. The variable <code>tessedit_char_whitelist</code> tells Tesseract what characters it can use when turning an image into text. For this program the integers 0-9 are needed as well as the &quot;/&quot; between current and max health values.</li>
 </ul>
 <p>In my <code>process_image</code> function I resized the image to be larger:</p>
-<pre style="background-color:#2b303b;">
-<code><span style="color:#c0c5ce;">w, h = img.size</span><span style="color:#c0c5ce;">
-img = img.</span><span style="color:#bf616a;">resize</span><span style="color:#c0c5ce;">((w * </span><span style="color:#d08770;">3</span><span style="color:#c0c5ce;">, h * </span><span style="color:#d08770;">3</span><span style="color:#c0c5ce;">))</span><span style="color:#c0c5ce;">
+<pre data-lang="python" style="background-color:#31333d;color:#ffffffc4;" class="language-python "><code class="language-python" data-lang="python"><span>w, h </span><span style="color:#db7c6d;">= </span><span>img.size
+</span><span>img </span><span style="color:#db7c6d;">= </span><span>img.</span><span style="font-weight:bold;color:#a3cbe3;">resize</span><span>((w </span><span style="color:#db7c6d;">* 3</span><span>, h </span><span style="color:#db7c6d;">* 3</span><span>))
 </span></code></pre>
 <p>The larger image, the configuration settings, and some fiddling with the threshold numbers responsible for the image contrast allowed Tesseract to correctly read health values.</p>
 <h1 id="communicating-with-an-led-strip">Communicating with an LED Strip</h1>
@@ -147,11 +140,11 @@ img = img.</span><span style="color:#bf616a;">resize</span><span style="color:#c
 <p>These packets gave me both the MAC address of the strip and the identifier required at the start of each request.</p>
 <h2 id="sending-requests-using-flask">Sending Requests using Flask</h2>
 <p>The exact code for the next section can be found in one of my <a href="https://github.com/kyleoneill/bluetooth_light_controller">GitHub repositories</a>. I created a very basic Flask server with only one endpoint which handles a POST request that changes the strip's color. I changed the screen reader from earlier to send a POST request to this endpoint every few milliseconds with the new color values. After receiving a request and doing some validation and hex transformation the Flask server uses gatttool to send a color change request:</p>
-<pre style="background-color:#2b303b;">
-<code><span style="color:#b48ead;">def </span><span style="color:#8fa1b3;">write_data</span><span style="color:#c0c5ce;">(</span><span style="color:#bf616a;">address</span><span style="color:#c0c5ce;">, </span><span style="color:#bf616a;">data</span><span style="color:#c0c5ce;">):</span><span style="color:#c0c5ce;">
-    cmd = </span><span style="color:#b48ead;">f</span><span style="color:#c0c5ce;">&quot;</span><span style="color:#a3be8c;">gatttool -b </span><span style="color:#c0c5ce;">{address}</span><span style="color:#a3be8c;"> --char-write-req -a </span><span style="color:#c0c5ce;">{handle_hex}</span><span style="color:#a3be8c;"> -n </span><span style="color:#c0c5ce;">{data}&quot;</span><span style="color:#c0c5ce;">
-    os.</span><span style="color:#bf616a;">system</span><span style="color:#c0c5ce;">(cmd)</span><span style="color:#c0c5ce;">
-</span></code></pre><h1 id="success">Success</h1>
+<pre data-lang="python" style="background-color:#31333d;color:#ffffffc4;" class="language-python "><code class="language-python" data-lang="python"><span style="color:#db7c6d;">def </span><span style="color:#a2ba43;">write_data</span><span>(</span><span style="color:#ffffff;">address</span><span>, </span><span style="color:#ffffff;">data</span><span>):
+</span><span>    cmd </span><span style="color:#db7c6d;">= </span><span style="color:#a3cbe3;">f</span><span style="font-weight:bold;color:#dbbb3d;">&quot;</span><span>gatttool -b {address} --char-write-req -a {handle_hex} -n {data}</span><span style="font-weight:bold;color:#dbbb3d;">&quot;
+</span><span>    os.</span><span style="font-weight:bold;color:#a3cbe3;">system</span><span>(cmd)
+</span></code></pre>
+<h1 id="success">Success</h1>
 <p>Finally, health values from League of Legends will update the LED strip in real time. I broke up this program into two parts because I do not have Bluetooth on my Windows desktop and gatttool is a Linux tool. It is possible to run gatttool on <a href="https://docs.microsoft.com/en-us/windows/wsl/about">WSL</a> and get a Bluetooth adapter, but it was easier to put the Flask server on a <a href="https://www.raspberrypi.org/">Raspberry Pi</a> I already had available. This segmentation also allows for other programs to control the LED strip as well.</p>
 <p>Thanks for reading, if you have any questions or comments, feel free to <a href="/about#contact-me">contact me</a>.</p>
 

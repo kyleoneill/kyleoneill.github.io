@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="The developer portfolio for Kyle O&#x27;Neill">
+        <meta name="author" content="Kyle O&#x27;Neill">
+       
+        <!-- favicon -->
+        <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+        <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+        <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+        <link rel="manifest" href="/site.webmanifest">
+        <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
+        <meta name="msapplication-TileColor" content="#ffffff">
+        <meta name="theme-color" content="#ffffff">
+
+        <!-- fonts and styles -->
+        <link href="https://fonts.googleapis.com/css?family=Rubik:400,700" rel="stylesheet">
+        <link href="https://kyleoneill.dev/style.css" rel="stylesheet">
+
+        <title>
+            
+                Learning x86-64
+            
+        </title>
+    </head>
+    <body>
+        <div class="section header">
+            <div class="logo">
+                <a href="/" class="logo-image" width="100"></a>
+            </div>
+            <div class="links">
+                
+                
+                    <a href="https://kyleoneill.dev/about/">About</a>
+                
+                    <a href="https://kyleoneill.dev/resume/">Resume</a>
+                
+                
+                    
+                    <a href="https://kyleoneill.dev/blog/">Blog</a>
+                
+            </div>
+            <!-- search would go here -->
+        </div>
+        
+<div class="section title">
+    Learning x86-64
+    <div class="subtitle">
+        November  8, 2023
+    </div>
+</div>
+<div class="section content">
+    <h1 id="let-s-learn-x86-64">Let's learn x86-64</h1>
+<p>I have recently been playing <a href="https://en.wikipedia.org/wiki/Shenzhen_I/O">Shenzhen I/O</a> and it reminded me of when I took a course in college where I learned some basic <a href="https://en.wikipedia.org/wiki/MIPS_architecture">MIPS</a>. I figured it might be fun to learn some more assembly, specifically one that is more popular in use. I figured I would try to make something that sounded &quot;simple&quot;, a program in x86-64 that allows a user to input two numbers which are then added together and displayed.</p>
+<h1 id="adding-is-supposed-to-be-easy">Adding is supposed to be easy</h1>
+<p>This idea in a higher level language is extremely simple and pretty commonly used when first learning a language or learning programming. The following is an example of what we want to do, written in Rust.</p>
+<pre data-lang="rust" style="background-color:#31333d;color:#ffffffc4;" class="language-rust "><code class="language-rust" data-lang="rust"><span style="color:#db7c6d;">use </span><span>std::io::{stdin, stdout, Write};
+</span><span>
+</span><span style="color:#a3cbe3;">fn </span><span style="color:#a2ba43;">main</span><span>() {
+</span><span>    </span><span style="color:#707180;">// Define a buffer to hold our user input
+</span><span>    </span><span style="color:#a3cbe3;">let </span><span style="color:#dbbb3d;">mut</span><span> input </span><span style="color:#db7c6d;">= </span><span style="color:#e7e7e7;">String</span><span>::new();
+</span><span>    
+</span><span>    </span><span style="color:#707180;">// Get a number from our user
+</span><span>    print!(</span><span style="font-weight:bold;color:#dbbb3d;">&quot;</span><span>Enter a number: </span><span style="font-weight:bold;color:#dbbb3d;">&quot;</span><span>);
+</span><span>    std::io::stdout().</span><span style="color:#db7c6d;">flush</span><span>().</span><span style="color:#db7c6d;">unwrap</span><span>(); </span><span style="color:#707180;">// Flush the buffer to output as print! doesn&#39;t do that for performance
+</span><span>    </span><span style="color:#db7c6d;">stdin</span><span>().</span><span style="color:#db7c6d;">read_line</span><span>(</span><span style="color:#db7c6d;">&amp;</span><span style="color:#dbbb3d;">mut</span><span> input).</span><span style="color:#db7c6d;">expect</span><span>(</span><span style="font-weight:bold;color:#dbbb3d;">&quot;</span><span>Didn&#39;t get a string</span><span style="font-weight:bold;color:#dbbb3d;">&quot;</span><span>);
+</span><span>    </span><span style="color:#a3cbe3;">let</span><span> input_without_newline </span><span style="color:#db7c6d;">= &amp;</span><span>input[</span><span style="color:#db7c6d;">..</span><span>input.</span><span style="color:#db7c6d;">len</span><span>() </span><span style="color:#db7c6d;">- 1</span><span>]; </span><span style="color:#707180;">// We need to remove the newline at the end of the string
+</span><span>    </span><span style="color:#a3cbe3;">let</span><span> first_num </span><span style="color:#db7c6d;">=</span><span> input_without_newline.parse::&lt;</span><span style="color:#a3cbe3;">i32</span><span>&gt;().</span><span style="color:#db7c6d;">unwrap</span><span>();
+</span><span>    
+</span><span>    </span><span style="color:#707180;">// Reset the buffer value and get a second number from our user
+</span><span>    input </span><span style="color:#db7c6d;">= </span><span style="font-weight:bold;color:#dbbb3d;">&quot;&quot;</span><span>.</span><span style="color:#db7c6d;">to_owned</span><span>();
+</span><span>    print!(</span><span style="font-weight:bold;color:#dbbb3d;">&quot;</span><span>Enter a second number: </span><span style="font-weight:bold;color:#dbbb3d;">&quot;</span><span>);
+</span><span>    std::io::stdout().</span><span style="color:#db7c6d;">flush</span><span>().</span><span style="color:#db7c6d;">unwrap</span><span>();
+</span><span>    </span><span style="color:#db7c6d;">stdin</span><span>().</span><span style="color:#db7c6d;">read_line</span><span>(</span><span style="color:#db7c6d;">&amp;</span><span style="color:#dbbb3d;">mut</span><span> input).</span><span style="color:#db7c6d;">expect</span><span>(</span><span style="font-weight:bold;color:#dbbb3d;">&quot;</span><span>Didn&#39;t get a string</span><span style="font-weight:bold;color:#dbbb3d;">&quot;</span><span>);
+</span><span>    </span><span style="color:#a3cbe3;">let</span><span> input_without_newline </span><span style="color:#db7c6d;">= &amp;</span><span>input[</span><span style="color:#db7c6d;">..</span><span>input.</span><span style="color:#db7c6d;">len</span><span>() </span><span style="color:#db7c6d;">- 1</span><span>];
+</span><span>    </span><span style="color:#a3cbe3;">let</span><span> second_num </span><span style="color:#db7c6d;">=</span><span> input_without_newline.parse::&lt;</span><span style="color:#a3cbe3;">i32</span><span>&gt;().</span><span style="color:#db7c6d;">unwrap</span><span>();
+</span><span>    
+</span><span>    </span><span style="color:#707180;">// Add the numbers together and display them
+</span><span>    </span><span style="color:#a3cbe3;">let</span><span> result </span><span style="color:#db7c6d;">=</span><span> first_num </span><span style="color:#db7c6d;">+</span><span> second_num;
+</span><span>    println!(</span><span style="font-weight:bold;color:#dbbb3d;">&quot;</span><span>Your added numbers: </span><span style="font-weight:bold;color:#a2ba43;">{}</span><span style="font-weight:bold;color:#dbbb3d;">&quot;</span><span>, result);
+</span><span>}
+</span></code></pre>
+<p>This program prompts a user to enter two numbers and prints their sum. The components of this program which we care about are:</p>
+<ol>
+<li>Create some buffer to hold user input</li>
+<li>Prompt the user to enter a number</li>
+<li>Read user text input</li>
+<li>Convert the user text input into an integer, removing any excess non-int data (like a newline)</li>
+<li>Repeat the previous three steps to get a second integer</li>
+<li>Add our two numbers together</li>
+<li>Convert our sum into a string and display it to the user</li>
+</ol>
+<h1 id="hello-world">Hello, World!</h1>
+<p>We will be using the <a href="https://www.nasm.us/">NASM</a> assembler. Before writing our adding program, let's make a Hello World so we have a baseline program to build from.</p>
+<pre data-lang="nasm" style="background-color:#31333d;color:#ffffffc4;" class="language-nasm "><code class="language-nasm" data-lang="nasm"><span style="color:#707180;">; I am a comment
+</span><span style="color:#db7c6d;">section </span><span style="color:#a2ba43;">.data
+</span><span style="color:#a2ba43;">    msg </span><span style="color:#db7c6d;">db </span><span>&quot;Hello world&quot;,</span><span style="font-weight:bold;color:#a2ba43;">13</span><span>,</span><span style="font-weight:bold;color:#a2ba43;">10
+</span><span>
+</span><span style="color:#db7c6d;">section </span><span style="color:#a2ba43;">.text
+</span><span>    </span><span style="color:#db7c6d;">global </span><span style="color:#a2ba43;">_main
+</span><span>
+</span><span style="color:#a2ba43;">_main:
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">rax</span><span>, </span><span style="font-weight:bold;color:#a2ba43;">1
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">rdi</span><span>, </span><span style="font-weight:bold;color:#a2ba43;">1
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">rsi</span><span>, </span><span style="color:#a2ba43;">msg
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">rdx</span><span>, </span><span style="font-weight:bold;color:#a2ba43;">13
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">syscall
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">jmp </span><span style="color:#a2ba43;">.exit
+</span><span>
+</span><span style="color:#a2ba43;">.exit:
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">rax</span><span>, </span><span style="font-weight:bold;color:#a2ba43;">60
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">rdi</span><span>, </span><span style="font-weight:bold;color:#a2ba43;">0
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">syscall
+</span></code></pre>
+<p>This program is made to be run on Linux, assembly is platform specific.</p>
+<h2 id="sections">Sections</h2>
+<p>There are two &quot;sections&quot; we care about right now, <code>.data</code> and <code>.text</code>.</p>
+<p>The data section is where we declare static variables. Here, we define a <code>msg</code> variable which will hold the string <code>&quot;Hello world&quot;</code> with a carriage return and a line feed (newline) after it. The <code>db</code> stands for &quot;define bytes&quot; and allocates bytes to hold our string value.</p>
+<p>The text section is where we actually write our program. Our text section begins with <code>global _main</code>, which defines the entry-point for our program.</p>
+<h2 id="comments">Comments</h2>
+<p>Comments in nasm begin with <code>;</code>.</p>
+<h2 id="instructions">Instructions</h2>
+<p>Our <code>_main</code> function contains four <code>mov</code> instructions, a syscall, and then a jump to another area in the assembly. The <code>mov</code> instruction takes the format of <code>MOV [destination] [source]</code>, where we are moving a value from the source (which can be a static value, variable, or another register) into the destination. In the <code>mov rax, 1</code> instruction we are moving the static value <code>1</code> into the <code>rax</code> register. A register is a tiny piece of memory your CPU can access very quickly. A list of registers can be found in many places on the internet, <a href="https://web.stanford.edu/class/cs107/guide/x86-64.html">this Stanford resource</a> being an example.</p>
+<h2 id="what-is-a-syscall">What is a syscall?</h2>
+<p>When working with assembly, we work in a low level space where privilege is an important concept and we need to care about &quot;userspace&quot; and &quot;kernel-space&quot;. Our program runs in &quot;userspace&quot; and lacks permissions to do many of the operations we want to do, like write to an output and get user input. We need to ask the OS to do those things for us. A syscall suspends our program and returns control to the OS, which will then examine pre-determined registers for data which tells it what we want it to do.</p>
+<p>The <code>rax</code> register tells the OS what function to run when we make a syscall and registers <code>rdi</code>, <code>rsi</code>, and <code>rdx</code> provide three arguments to that function. Here we move 1 into <code>rax</code>, which tells the OS that we want to call <code>sys_write</code>. We can see in the <a href="https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git/tree/fs/read_write.c">Linux kernel code</a> that <code>sys_write</code> expects three arguments: a file descriptor, a buffer, and a size. We move 1 into <code>rdi</code> to indicate our file descriptor (0 is std_input, 1 is std_output, 2 is std_error), our string variable into <code>rsi</code>, and the size of our string into <code>rdx</code>. We then make a syscall, which suspends our program and causes the OS to read those four registers, print our string to the screen, and then resume our program.</p>
+<h2 id="ending-our-program">Ending our program</h2>
+<p>After we print &quot;Hello world&quot; we jump to the <code>.exit</code> label and make another syscall. We move 60 into <code>rax</code>, which tells the OS that we want to exit our program. The exit takes a single argument, the exit code. Our program has run successfully so we will move a 0 into <code>rdi</code> to indicate a successful status. Once we syscall here, our program ends.</p>
+<h2 id="actually-running-the-program">Actually running the program</h2>
+<p>We can run our program by creating an object file and then linking the two to create a binary. The below will create an elf64 binary file named <code>hello</code> from a <code>hello.asm</code> assembly program which you can run on Linux:</p>
+<pre data-lang="sh" style="background-color:#31333d;color:#ffffffc4;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="font-weight:bold;color:#a3cbe3;">nasm</span><span style="color:#ffffff;"> -f</span><span> elf64</span><span style="color:#ffffff;"> -o</span><span> hello.o hello.asm
+</span><span style="font-weight:bold;color:#a3cbe3;">ld</span><span style="color:#ffffff;"> -o</span><span> hello hello.o
+</span></code></pre>
+<h1 id="hello-math">Hello, Math!</h1>
+<p>Now we want to translate the Rust code from earlier into an assembly program.</p>
+<h2 id="create-a-buffer-to-hold-user-input">Create a buffer to hold user input</h2>
+<p>We are going to define a variable to use as a buffer for our user input, but we are going to use a new section to define it. In addition to the data and text sections, we can also define a &quot;block starting symbol&quot; section where we can declare a variable which has not been assigned a value. We are going to define a buffer which can hold 64 bytes, an arbitrary and large size.</p>
+<pre data-lang="nasm" style="background-color:#31333d;color:#ffffffc4;" class="language-nasm "><code class="language-nasm" data-lang="nasm"><span style="color:#db7c6d;">section </span><span style="color:#a2ba43;">.bss
+</span><span style="color:#a2ba43;">    read_buffer </span><span style="color:#db7c6d;">resb </span><span style="font-weight:bold;color:#a2ba43;">64
+</span></code></pre>
+<h2 id="prompt-the-user-to-enter-a-number">Prompt the user to enter a number</h2>
+<p>This is the easy bit, as we already figured out how to do this in our &quot;Hello, World!&quot; example. Here we can define two prompt strings in our data section and then print to the screen in our text section.</p>
+<pre data-lang="nasm" style="background-color:#31333d;color:#ffffffc4;" class="language-nasm "><code class="language-nasm" data-lang="nasm"><span style="color:#db7c6d;">section </span><span style="color:#a2ba43;">.data
+</span><span style="color:#a2ba43;">    first_msg </span><span style="color:#db7c6d;">db </span><span>&quot;Enter first number: &quot;
+</span><span style="color:#a2ba43;">    first_msg_len </span><span style="color:#db7c6d;">equ </span><span style="color:#a2ba43;">$ </span><span>- </span><span style="color:#a2ba43;">first_msg</span><span style="color:#707180;"> ; This variable is going to store the length of our string, for ease of use
+</span><span style="color:#a2ba43;">    second_msg </span><span style="color:#db7c6d;">db </span><span>&quot;Enter second number: &quot;
+</span><span style="color:#a2ba43;">    second_msg_len </span><span style="color:#db7c6d;">equ </span><span style="color:#a2ba43;">$ </span><span>- </span><span style="color:#a2ba43;">second_msg
+</span><span>
+</span><span style="color:#db7c6d;">section </span><span style="color:#a2ba43;">.text
+</span><span>    </span><span style="color:#db7c6d;">global </span><span style="color:#a2ba43;">_start
+</span><span>
+</span><span style="color:#a2ba43;">_start:
+</span><span style="color:#707180;">    ; Ask our user to enter a number
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">rax</span><span>, </span><span style="font-weight:bold;color:#a2ba43;">1
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">rdi</span><span>, </span><span style="font-weight:bold;color:#a2ba43;">1
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">rsi</span><span>, </span><span style="color:#a2ba43;">first_msg
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">rdx</span><span>, </span><span style="color:#a2ba43;">first_msg_len
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">syscall
+</span><span>
+</span><span style="color:#707180;">    ; We will get user input here later
+</span><span>
+</span><span style="color:#707180;">    ; Repeat the above with our second_message variables
+</span><span style="color:#707180;">    ; ...
+</span></code></pre>
+<h2 id="read-user-text-input">Read user text input</h2>
+<p>We are going to make a new function to perform this action to aid both in readability and to allow us to re-use it. We are also going to use a new syscall with code 0, <code>sys_read</code>. <code>sys_read</code> takes three arguments, a file descriptor (see above), a buffer, and a buffer size. <code>sys_read</code> also has a return value which we care about, the number of bytes written. When a syscall returns a value, that value will be placed in the <code>rax</code> register by the OS before control is returned to our program.</p>
+<pre data-lang="nasm" style="background-color:#31333d;color:#ffffffc4;" class="language-nasm "><code class="language-nasm" data-lang="nasm"><span style="color:#707180;">;...
+</span><span>
+</span><span style="color:#a2ba43;">_start:
+</span><span style="color:#707180;">    ; ...
+</span><span>
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">call </span><span style="color:#a2ba43;">_read_number
+</span><span style="color:#a2ba43;">    
+</span><span style="color:#707180;">    ; ...
+</span><span>
+</span><span style="color:#a2ba43;">_read_number:
+</span><span style="color:#707180;">    ; Function prologue
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">push </span><span style="color:#ffffff;">rbp
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">rbp</span><span>, </span><span style="color:#ffffff;">rsp
+</span><span>
+</span><span style="color:#707180;">    ; call &quot;sys_read&quot;
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">rax</span><span>, </span><span style="font-weight:bold;color:#a2ba43;">0
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">rdi</span><span>, </span><span style="font-weight:bold;color:#a2ba43;">0</span><span style="color:#707180;"> ; file_descriptor 0 is std_input
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">rsi</span><span>, </span><span style="color:#a2ba43;">read_buffer
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">rdx</span><span>, </span><span style="font-weight:bold;color:#a2ba43;">20</span><span style="color:#707180;"> ; We are giving an arbitrarily large buffer size here
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">syscall
+</span><span style="color:#a2ba43;">    
+</span><span style="color:#707180;">    ; Convert our text into a number and store it in r12
+</span><span style="color:#707180;">    ; This will be explained in the next section
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">call </span><span style="color:#a2ba43;">_read_buffer_to_number
+</span><span>
+</span><span style="color:#707180;">    ; Function epilogue
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">rsp</span><span>, </span><span style="color:#ffffff;">rbp
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">pop </span><span style="color:#ffffff;">rbp
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">ret
+</span></code></pre>
+<p>The <code>call</code> and <code>ret</code> instructions here manage a pointer which tells the CPU where it is executing in the program. When we <code>call</code>, the address of the next instruction is stored on the stack so we know where to come back to and resume execution when our function finishes. When we call <code>ret</code>, the top value on the stack is read and replaces the instruction pointer. It is typical when writing a function in assembly to include a &quot;prologue&quot; and &quot;epilogue&quot; before and after your functions main code so, if your function uses the stack, you don't cause a problem when <code>ret</code> tries to grab the address left for it by <code>call</code>. This program is not using the stack, but since the purpose of this exercise is to learn, the prologue/epilogue are included anyway.</p>
+<p>After we syscall, the OS will fill our <code>read_buffer</code> with whatever the user inputs and store the number of bytes written into <code>rax.</code></p>
+<h2 id="convert-the-user-text-into-an-integer">Convert the user text into an integer</h2>
+<p>If we try to do any math with the number input by a user here, the output will not make sense. If our user enters <code>1</code> then the integer value stored in our <code>read_buffer</code> is going to be <code>2609</code> in decimal, or <code>0x0A31</code> in hex. On a little endian machine like mine this corresponds to the ASCII value for &quot;1&quot; (<code>49</code> in decimal, <code>0x31</code> in hex) followed by a line feed (<code>10</code> in decimal, <code>0xA</code> in hex). In order to treat the input like a number so we can do math with it, we need to remove the linefeed and convert the ASCII number into an integer number.</p>
+<p>The process of converting our digits is two-fold. First, we first must take an ASCII digit and subtract 48 from it. Since the ASCII value of &quot;1&quot; is 49, subtracting 48 will bring the value to what we expect it to be. Second, we need to accumulate our digits. If our user enters a number with more than one digit, like 105, then every time we read a digit we must multiply our accumulated number by 10 before adding a digit.</p>
+<p>The following was my first pass at this, but it contains a bug that prevents it from working as expected.</p>
+<pre data-lang="nasm" style="background-color:#31333d;color:#ffffffc4;" class="language-nasm "><code class="language-nasm" data-lang="nasm"><span style="color:#a2ba43;">_read_buffer_to_number:
+</span><span style="color:#707180;">    ; rax here is the number of bytes that we just wrote to read_buffer
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">r12</span><span>, </span><span style="font-weight:bold;color:#a2ba43;">0</span><span style="color:#707180;"> ; Our accumulator
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">r10</span><span>, </span><span style="font-weight:bold;color:#a2ba43;">0</span><span style="color:#707180;"> ; Loop counter
+</span><span style="color:#a2ba43;">    .</span><span style="color:#db7c6d;">loop</span><span style="color:#a2ba43;">:
+</span><span style="color:#707180;">        ; The instruction below this comment causes a bug
+</span><span style="color:#a2ba43;">        </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">r9</span><span>, [</span><span style="color:#a2ba43;">read_buffer </span><span>+ </span><span style="color:#ffffff;">r10</span><span>]</span><span style="color:#707180;"> ; mov char from read_buffer into a register
+</span><span style="color:#a2ba43;">        </span><span style="color:#db7c6d;">sub </span><span style="color:#ffffff;">r9</span><span>, </span><span style="font-weight:bold;color:#a2ba43;">48</span><span style="color:#707180;"> ; subtract 48 (converting ASCII into decimal)
+</span><span style="color:#707180;">        ; fold the number into an accumulator
+</span><span style="color:#707180;">        ;    acc = acc x 10
+</span><span style="color:#707180;">        ;    acc = acc + new_char
+</span><span style="color:#a2ba43;">        </span><span style="color:#db7c6d;">imul </span><span style="color:#ffffff;">r12</span><span>, </span><span style="font-weight:bold;color:#a2ba43;">10
+</span><span style="color:#a2ba43;">        </span><span style="color:#db7c6d;">add </span><span style="color:#ffffff;">r12</span><span>, </span><span style="color:#ffffff;">r9
+</span><span style="color:#a2ba43;">        </span><span style="color:#db7c6d;">add </span><span style="color:#ffffff;">r10</span><span>, </span><span style="font-weight:bold;color:#a2ba43;">1</span><span style="color:#707180;"> ; Increment loop counter
+</span><span style="color:#a2ba43;">        </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">r11</span><span>, </span><span style="color:#ffffff;">r10</span><span style="color:#707180;"> ; Set a temporary register we will use for comparison
+</span><span style="color:#a2ba43;">        </span><span style="color:#db7c6d;">add </span><span style="color:#ffffff;">r11</span><span>, </span><span style="font-weight:bold;color:#a2ba43;">1</span><span style="color:#707180;"> ; Add 1 to tmp register, this is to account for the newline we want to ignore from our input
+</span><span style="color:#a2ba43;">        </span><span style="color:#db7c6d;">cmp </span><span style="color:#ffffff;">r11</span><span>, </span><span style="color:#ffffff;">rax</span><span style="color:#707180;"> ; Compare how many digits we have read to rax, which holds how many characters were written
+</span><span style="color:#a2ba43;">        </span><span style="color:#db7c6d;">jl </span><span style="color:#a2ba43;">.</span><span style="color:#db7c6d;">loop</span><span style="color:#707180;"> ; Loop again if we have not read all digits
+</span><span style="color:#707180;">    ; r12, the accumulator, is our return value
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">ret
+</span></code></pre>
+<p>The snippet above contains a <code>loop</code> label representing a loop, the <code>r12</code> register representing the number we are accumulating (and our output), and a loop counter stored in the <code>r10</code> register. In our loop we move data out of the <code>read_buffer</code> and into the <code>r9</code> register, subtract 48 to convert the value from an ASCII digit to a number, and fold the number into our accumulator. We then increment our loop counter and compare it to <code>rax</code> which contains the number of bytes written by the user in the previous syscall. If our loop counter is less than the number of bytes written, we jump to the <code>.loop</code> label to read another digit.</p>
+<h2 id="debugging-assembly">Debugging assembly</h2>
+<p>The <code>_read_buffer_to_number</code> function is very close to functional but contains a bug that stops it from doing what we expect it to. This is a good time to learn how to debug an assembly program. Higher level languages have very convenient debuggers built into IDEs and the classic <code>print(&quot;I am here&quot;)</code> if one does not want to use a debugger. Neither of these are viable strategies in our assembler. We are going to use <code>gdb</code> to debug. To start, we need to generate debug symbols. We're going to change how we were generating our binary file like so:</p>
+<pre data-lang="sh" style="background-color:#31333d;color:#ffffffc4;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="font-weight:bold;color:#a3cbe3;">nasm</span><span style="color:#ffffff;"> -f</span><span> elf64</span><span style="color:#ffffff;"> -gdwarf -o</span><span> add.o add.asm
+</span><span style="font-weight:bold;color:#a3cbe3;">ld</span><span style="color:#ffffff;"> -o</span><span> add add.o
+</span></code></pre>
+<p>Next, run <code>gdb</code> with the binary as an argument:</p>
+<pre data-lang="sh" style="background-color:#31333d;color:#ffffffc4;" class="language-sh "><code class="language-sh" data-lang="sh"><span style="font-weight:bold;color:#a3cbe3;">gdb</span><span> ./add
+</span></code></pre>
+<p>We want to debug the _read_buffer_to_number function, so add a breakpoint like:</p>
+<pre data-lang="sh" style="background-color:#31333d;color:#ffffffc4;" class="language-sh "><code class="language-sh" data-lang="sh"><span>(</span><span style="font-weight:bold;color:#a3cbe3;">gdb</span><span>) b _read_buffer_to_number
+</span></code></pre>
+<p>Then enter &quot;run&quot; to begin execution of the program. After we enter our number, the breakpoint will trigger. Entering &quot;next&quot; will cause the debugger to step forward by one instruction, we will step until we run the <code>mov r9, [read_buffer + r10]</code> instruction. After that instruction is run we can enter &quot;info registers&quot; to display all of our registers and the values they currently contain. If we run that here we can see that <code>r9</code> contains the full user input value (<code>0xa31</code> in hex if the user entered &quot;1&quot;). This is not what we want and will cause unexpected behavior, we want one byte to be read at a time and we do not want the line feed byte to be included.</p>
+<p>The <code>mov</code> instruction in nasm will move the entire value from the source into the destination. We can replace it with a more specific move instruction, <code>movzx</code>, and specify that we only want to move a byte. Our move instruction will now look like:</p>
+<pre data-lang="nasm" style="background-color:#31333d;color:#ffffffc4;" class="language-nasm "><code class="language-nasm" data-lang="nasm"><span style="color:#db7c6d;">movzx </span><span style="color:#ffffff;">r9</span><span>, </span><span style="color:#db7c6d;">byte </span><span>[</span><span style="color:#a2ba43;">read_buffer </span><span>+ </span><span style="color:#ffffff;">r10</span><span>]
+</span></code></pre>
+<p>The &quot;zx&quot; portion of the instruction stands for &quot;zero extend&quot;. A single byte will be moved and any remaining space will be filled with zeros to &quot;extend&quot; it to be a word.</p>
+<h2 id="add-our-numbers-together">Add our numbers together</h2>
+<p>After we have two numbers, adding them together is a simple task. We will use a variable to store our sum.</p>
+<pre data-lang="nasm" style="background-color:#31333d;color:#ffffffc4;" class="language-nasm "><code class="language-nasm" data-lang="nasm"><span style="color:#db7c6d;">section </span><span style="color:#a2ba43;">.data
+</span><span style="color:#707180;">; ...
+</span><span style="color:#a2ba43;">sum: </span><span style="color:#db7c6d;">dq </span><span style="font-weight:bold;color:#a2ba43;">0
+</span><span>
+</span><span style="color:#db7c6d;">section </span><span style="color:#a2ba43;">.text
+</span><span>
+</span><span style="color:#707180;">; Enter _start, prompt the user to enter a number, call _read which itself calls _read_buffer_to_number
+</span><span style="color:#707180;">; _read_buffer_to_number leaves our user input number in r12
+</span><span style="color:#db7c6d;">add </span><span>[</span><span style="color:#a2ba43;">sum</span><span>], </span><span style="color:#ffffff;">r12
+</span><span>
+</span><span style="color:#707180;">; Repeat for the second input number
+</span></code></pre>
+<p>Above, we are using a <code>sum</code> variable to store the sum of the user input numbers. It is initialized to be 0 and then both times a number is entered, that numer is added to <code>sum</code>. The brackets in the <code>add</code> instruction act to dereference the variable and add to the value it holds.</p>
+<h2 id="convert-our-sum-into-a-string">Convert our sum into a string</h2>
+<p>Once we have our sum, the number must be converted into a string so it can be displayed to the user.</p>
+<pre data-lang="nasm" style="background-color:#31333d;color:#ffffffc4;" class="language-nasm "><code class="language-nasm" data-lang="nasm"><span style="color:#a2ba43;">_int_to_string:
+</span><span style="color:#707180;">    ; Function prologue
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">push </span><span style="color:#ffffff;">rbp
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">rbp</span><span>, </span><span style="color:#ffffff;">rsp
+</span><span>
+</span><span style="color:#707180;">    ; Input is in r12
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">r10</span><span>, </span><span style="font-weight:bold;color:#a2ba43;">0</span><span style="color:#707180;"> ; Loop counter
+</span><span style="color:#a2ba43;">    .div_loop:
+</span><span>
+</span><span style="color:#a2ba43;">        </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">rax</span><span>, </span><span style="color:#ffffff;">r12</span><span style="color:#707180;"> ; Move the lower 32 bits of the dividend into rax
+</span><span style="color:#a2ba43;">        </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">rdx</span><span>, </span><span style="font-weight:bold;color:#a2ba43;">0</span><span style="color:#707180;"> ; Clear RDX (0 out the upper 32 bits of the dividend)
+</span><span style="color:#a2ba43;">        </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">rbx</span><span>, </span><span style="font-weight:bold;color:#a2ba43;">10</span><span style="color:#707180;"> ; Move the divisor into rbx
+</span><span style="color:#a2ba43;">        </span><span style="color:#db7c6d;">div </span><span style="color:#ffffff;">rbx</span><span style="color:#707180;"> ; Divide rdx:rax by rbx
+</span><span style="color:#a2ba43;">        </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">r12</span><span>, </span><span style="color:#ffffff;">rax</span><span style="color:#707180;"> ; Replace r12 with the quotient
+</span><span style="color:#a2ba43;">        </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">r11</span><span>, </span><span style="color:#ffffff;">rdx</span><span style="color:#707180;"> ; Place our remainder in r11
+</span><span>
+</span><span style="color:#a2ba43;">        </span><span style="color:#db7c6d;">add </span><span style="color:#ffffff;">r11</span><span>, </span><span style="font-weight:bold;color:#a2ba43;">48</span><span style="color:#707180;"> ; Convert our int into an ASCII number
+</span><span style="color:#a2ba43;">        </span><span style="color:#db7c6d;">push </span><span style="color:#ffffff;">r11</span><span style="color:#707180;"> ; Push our digit onto the stack. We push/pop the digits so our string reads in the correct order
+</span><span style="color:#a2ba43;">        </span><span style="color:#db7c6d;">add </span><span style="color:#ffffff;">r10</span><span>, </span><span style="font-weight:bold;color:#a2ba43;">1</span><span style="color:#707180;"> ; increment counter
+</span><span style="color:#707180;">        ; If r12 is greater than 0 then we still have more digits to read
+</span><span style="color:#a2ba43;">        </span><span style="color:#db7c6d;">cmp </span><span style="color:#ffffff;">r12</span><span>, </span><span style="font-weight:bold;color:#a2ba43;">0
+</span><span style="color:#a2ba43;">        </span><span style="color:#db7c6d;">jg </span><span style="color:#a2ba43;">.div_loop
+</span><span>
+</span><span style="color:#707180;">    ; Pop the digits off of the stack
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">r11</span><span>, </span><span style="font-weight:bold;color:#a2ba43;">0</span><span style="color:#707180;"> ; Second loop counter
+</span><span style="color:#a2ba43;">    .pop_loop:
+</span><span style="color:#a2ba43;">        </span><span style="color:#db7c6d;">pop </span><span style="color:#ffffff;">r13
+</span><span style="color:#a2ba43;">        </span><span style="color:#db7c6d;">mov </span><span>[</span><span style="color:#a2ba43;">read_buffer </span><span>+ </span><span style="color:#ffffff;">r11</span><span>], </span><span style="color:#ffffff;">r13b</span><span style="color:#707180;"> ; Move the least significant byte from r13 into the read buffer
+</span><span style="color:#a2ba43;">        </span><span style="color:#db7c6d;">add </span><span style="color:#ffffff;">r11</span><span>, </span><span style="font-weight:bold;color:#a2ba43;">1</span><span style="color:#707180;"> ; increment counter
+</span><span style="color:#a2ba43;">        </span><span style="color:#db7c6d;">cmp </span><span style="color:#ffffff;">r11</span><span>, </span><span style="color:#ffffff;">r10</span><span style="color:#707180;"> ; compare the loop counter against the number of digits that were stored on the stack
+</span><span style="color:#a2ba43;">        </span><span style="color:#db7c6d;">jl </span><span style="color:#a2ba43;">.pop_loop</span><span style="color:#707180;"> ; If our loop counter is smaller, we have more digits to pop
+</span><span>
+</span><span style="color:#707180;">    ; Add a line feed to read_buffer
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">mov </span><span>[</span><span style="color:#a2ba43;">read_buffer </span><span>+ </span><span style="color:#ffffff;">r11</span><span>], </span><span style="color:#db7c6d;">byte </span><span style="font-weight:bold;color:#a2ba43;">10
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">add </span><span style="color:#ffffff;">r10</span><span>, </span><span style="font-weight:bold;color:#a2ba43;">1</span><span style="color:#707180;"> ; Increment the number of characters we wrote by one to account for the line feed
+</span><span>
+</span><span style="color:#707180;">    ; Set r12 to be our string output
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">r12</span><span>, </span><span style="color:#a2ba43;">read_buffer
+</span><span style="color:#707180;">    ; Set r13 to be the number of characters we wrote to the string
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">r13</span><span>, </span><span style="color:#ffffff;">r10
+</span><span>
+</span><span style="color:#707180;">    ; Function epilogue
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">mov </span><span style="color:#ffffff;">rsp</span><span>, </span><span style="color:#ffffff;">rbp
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">pop </span><span style="color:#ffffff;">rbp
+</span><span style="color:#a2ba43;">    </span><span style="color:#db7c6d;">ret
+</span></code></pre>
+<p>This function takes a number as an input in the <code>r12</code> register. The first loop divides the value in <code>r12</code> by 10 to pop off the rightmost digit, converts it to an ASCII representation, and then pushes it onto the stack. If our remaining value is greater than 0, then we still have digits to read and the loop repeats. The second loop pops our ASCII digits off of the stack and into our string buffer. A line feed is then added and we return our string in the <code>r12</code> register and its length in the <code>r13</code> register (the string is also &quot;returned&quot; into the buffer).</p>
+<p>The process of pushing and then popping our digits to and from the stack ensures that the number is built in the correct order. The first loop, which gets each digit and converts them, reads the digits from back to front. This causes our number to appear backwards. Since the stack is LIFO, pushing our digits to the stack as we read them and then taking the digits out when we are building the string will reverse their order into being correct.</p>
+<p>After running this function, the <code>r12</code> and <code>r13</code> registers contain our string and its length. Supplying these for a <code>std_write</code> syscall finishes our program and displays the result to the user.</p>
+<h2 id="running-the-program">Running the program</h2>
+<p>The adding program now works, with some limitations. It cannot add negative numbers or non-whole numbers, we would need to check for &quot;-&quot; and &quot;.&quot; ASCII characters and handle them accordingly.</p>
+<p><img src="https://kyleoneill.dev/blog/learning-x86-64/add.png" alt="add_program_result_image" /></p>
+<h2 id="epilogue">Epilogue</h2>
+<p>I began this program with the intent on just adding two numbers together but ended up spending all of my time writing it on type conversion. Working without a standard library shows how convenient it is that most languages come with the batteries included and you don't need to worry about converting a string to a number beyond <code>my_string.parse::&lt;i32&gt;()</code>.</p>
+
+</div>
+<div class="section navigation">
+    
+    
+</div>
+
+        <div class="section footer">
+            &copy; 2023 Kyle O&#x27;Neill
+        </div>
+    </body>
+</html>
